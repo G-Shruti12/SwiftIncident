@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Emergency Dashboard</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+display:flex;
+height:100vh;
+background:#f4f4f4;
+}
+
+/* LEFT PANEL */
+
+.left{
+width:260px;
+background:#1e293b;
+color:white;
+padding:20px;
+overflow-y:auto;
+}
+
+.left img{
+width:90px;
+border-radius:50%;
+}
+
+.left button{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+.sos{
+background:red;
+color:white;
+font-weight:bold;
+}
+
+/* CENTER MAP */
+
+.center{
+flex:1;
+position:relative;
+}
+
+#map{
+height:100%;
+width:100%;
+}
+
+/* MAP MODE BUTTON */
+
+.modeToggle{
+position:absolute;
+top:15px;
+right:15px;
+z-index:1000;
+padding:8px 12px;
+border:none;
+border-radius:6px;
+background:black;
+color:white;
+cursor:pointer;
+}
+
+/* RIGHT PANEL */
+
+.right{
+width:320px;
+background:white;
+border-left:1px solid #ddd;
+display:flex;
+flex-direction:column;
+}
+
+.needAreas{
+height:60%;
+overflow:auto;
+padding:15px;
+}
+
+.needItem{
+background:#f2f2f2;
+padding:10px;
+margin-bottom:10px;
+border-radius:6px;
+}
+
+/* FEEDBACK AREA */
+
+.messages{
+height:40%;
+border-top:1px solid #ccc;
+padding:15px;
+display:flex;
+flex-direction:column;
+}
+
+.messages textarea{
+width:100%;
+height:60px;
+resize:none;
+padding:6px;
+margin-bottom:8px;
+}
+
+.messages button{
+padding:6px;
+cursor:pointer;
+}
+
+#feedbackList{
+margin-top:10px;
+overflow:auto;
+font-size:14px;
+}
+
+</style>
+</head>
+
+
+<body>
+
+<!-- LEFT USER PANEL -->
+
+<div class="left">
+
+<center>
+<img src="https://via.placeholder.com/90">
+<h3 id="username">User</h3>
+</center>
+
+<p>Phone: 9876543210</p>
+<p>Blood Group: O+</p>
+
+<p id="locationInfo">Detecting location...</p>
+
+<h4>Emergency Contacts</h4>
+<ul>
+<li>Father</li>
+<li>Friend</li>
+<li>Brother</li>
+</ul>
+
+<button class="sos">SEND SOS</button>
+
+</div>
+
+
+<!-- CENTER MAP -->
+
+<div class="center">
+
+<button class="modeToggle" onclick="toggleMode()">Toggle Map</button>
+
+<div id="map"></div>
+
+</div>
+
+
+<!-- RIGHT PANEL -->
+
+<div class="right">
+
+<div class="needAreas">
+
+<h3>High Need Areas</h3>
+
+<div class="needItem">Accident Zone - Sector 45</div>
+<div class="needItem">High Risk Road - Highway 21</div>
+<div class="needItem">Emergency Needed - Market Road</div>
+
+</div>
+
+
+<div class="messages">
+
+<h3>User Feedback</h3>
+
+<textarea id="feedbackText" placeholder="Report accident, danger area, road block..."></textarea>
+
+<button onclick="submitFeedback()">Send</button>
+
+<div id="feedbackList"></div>
+
+</div>
+
+</div>
+
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+/* INITIAL MAP */
+
+var map = L.map('map').setView([20.5937,78.9629],5);
+
+/* LIGHT MAP */
+
+var lightLayer = L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+);
+
+/* DARK MAP */
+
+var darkLayer = L.tileLayer(
+'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+);
+
+lightLayer.addTo(map);
+
+let darkMode = false;
+
+/* MAP MODE TOGGLE */
+
+function toggleMode(){
+
+if(darkMode){
+
+map.removeLayer(darkLayer);
+lightLayer.addTo(map);
+darkMode=false;
+
+}else{
+
+map.removeLayer(lightLayer);
+darkLayer.addTo(map);
+darkMode=true;
+
+}
+
+}
+
+/* GET USER LOCATION */
+
+if(navigator.geolocation){
+
+navigator.geolocation.getCurrentPosition(showLocation, locationError);
+
+}else{
+
+alert("Geolocation not supported");
+
+}
+
+
+function showLocation(position){
+
+let lat = position.coords.latitude;
+let lng = position.coords.longitude;
+
+/* SHOW LOCATION TEXT */
+
+document.getElementById("locationInfo").innerHTML =
+"Latitude: " + lat + "<br>Longitude: " + lng;
+
+/* CENTER MAP */
+
+map.setView([lat,lng],13);
+
+/* ADD MARKER */
+
+L.marker([lat,lng])
+.addTo(map)
+.bindPopup("You are here")
+.openPopup();
+
+}
+
+
+function locationError(){
+
+document.getElementById("locationInfo").innerText =
+"Location access denied.";
+
+}
+
+
+/* SOS BUTTON */
+
+document.querySelector(".sos").onclick=function(){
+
+if(navigator.geolocation){
+
+navigator.geolocation.getCurrentPosition(function(pos){
+
+let lat = pos.coords.latitude;
+let lng = pos.coords.longitude;
+
+L.marker([lat,lng])
+.addTo(map)
+.bindPopup("🚨 Emergency SOS")
+.openPopup();
+
+alert("Emergency location shared!");
+
+});
+
+}
+
+};
+
+
+/* FEEDBACK SYSTEM */
+
+function submitFeedback(){
+
+let text = document.getElementById("feedbackText").value;
+
+if(text.trim()==""){
+alert("Please write feedback");
+return;
+}
+
+/* SHOW IN FEEDBACK PANEL */
+
+let list = document.getElementById("feedbackList");
+
+let item = document.createElement("p");
+
+item.innerText = "• "+text;
+
+list.appendChild(item);
+
+
+/* ADD MAP MARKER */
+
+if(navigator.geolocation){
+
+navigator.geolocation.getCurrentPosition(function(pos){
+
+let lat = pos.coords.latitude;
+let lng = pos.coords.longitude;
+
+L.marker([lat,lng])
+.addTo(map)
+.bindPopup("User Report: "+text)
+.openPopup();
+
+});
+
+}
+
+document.getElementById("feedbackText").value="";
+
+}
+
+</script>
+
+</body>
+</html>
