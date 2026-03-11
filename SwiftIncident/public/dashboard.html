@@ -136,7 +136,7 @@ font-size:14px;
 <div class="left">
 
 <center>
-<img src="https://via.placeholder.com/90">
+<img src="https://static.vecteezy.com/system/resources/previews/019/879/186/non_2x/user-icon-on-transparent-background-free-png.png">
 <h3 id="username">User</h3>
 </center>
 
@@ -201,7 +201,12 @@ font-size:14px;
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
+const params = new URLSearchParams(window.location.search);
+const username = params.get("username");
 
+if(username){
+  document.getElementById("username").innerText = username;
+}
 /* INITIAL MAP */
 
 var map = L.map('map').setView([20.5937,78.9629],5);
