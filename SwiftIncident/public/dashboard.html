@@ -11,19 +11,45 @@
 body{
 margin:0;
 font-family:Arial;
-display:flex;
 height:100vh;
-background:#f4f4f4;
+display:flex;
+background:#181414;
 }
 
-/* LEFT PANEL */
+/* HAMBURGER */
+
+.hamburger{
+position:absolute;
+top:15px;
+left:15px;
+font-size:26px;
+cursor:pointer;
+z-index:1100;
+background:rgb(100, 98, 98);
+padding:8px 12px;
+border-radius:6px;
+box-shadow:0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* LEFT SLIDING PANEL */
 
 .left{
 width:260px;
-background:#1e293b;
+background:url('https://img.freepik.com/free-vector/wave-background-abstract-gradient-design_483537-3688.jpg?semt=ais_hybrid&w=740&q=80');
 color:white;
 padding:20px;
 overflow-y:auto;
+position:fixed;
+left:-280px;
+top:0;
+height:100%;
+transition:0.3s;
+z-index:1000;
+box-shadow:2px 0 8px rgba(0,0,0,0.3);
+}
+
+.left.active{
+left:0;
 }
 
 .left img{
@@ -41,7 +67,7 @@ cursor:pointer;
 }
 
 .sos{
-background:red;
+background:rgb(233, 13, 13);
 color:white;
 font-weight:bold;
 }
@@ -54,30 +80,27 @@ position:relative;
 }
 
 #map{
-height:100%;
+height:100vh;
 width:100%;
 }
 
-/* MAP MODE BUTTON */
+/* MOVE ZOOM BUTTONS TO RIGHT */
 
-.modeToggle{
-position:absolute;
-top:15px;
-right:15px;
-z-index:1000;
-padding:8px 12px;
-border:none;
-border-radius:6px;
-background:black;
-color:white;
-cursor:pointer;
+.leaflet-top.leaflet-left{
+display:none;
+}
+
+.leaflet-top.leaflet-right{
+top:20px;
+right:20px;
 }
 
 /* RIGHT PANEL */
 
 .right{
 width:320px;
-background:white;
+color: white;
+background:url('https://img.freepik.com/free-vector/wave-background-abstract-gradient-design_483537-3688.jpg?semt=ais_hybrid&w=740&q=80');
 border-left:1px solid #ddd;
 display:flex;
 flex-direction:column;
@@ -90,7 +113,7 @@ padding:15px;
 }
 
 .needItem{
-background:#f2f2f2;
+background:#2e2c2c;
 padding:10px;
 margin-bottom:10px;
 border-radius:6px;
@@ -128,10 +151,10 @@ font-size:14px;
 </style>
 </head>
 
-
 <body>
 
-<!-- LEFT USER PANEL -->
+<div class="hamburger" onclick="toggleSidebar()">☰</div>
+
 
 <div class="left">
 
@@ -156,17 +179,11 @@ font-size:14px;
 
 </div>
 
-
-<!-- CENTER MAP -->
+<!-- MAP -->
 
 <div class="center">
-
-<button class="modeToggle" onclick="toggleMode()">Toggle Map</button>
-
 <div id="map"></div>
-
 </div>
-
 
 <!-- RIGHT PANEL -->
 
@@ -182,7 +199,6 @@ font-size:14px;
 
 </div>
 
-
 <div class="messages">
 
 <h3>User Feedback</h3>
@@ -197,106 +213,73 @@ font-size:14px;
 
 </div>
 
-
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
+
+/* USERNAME FROM URL */
+
 const params = new URLSearchParams(window.location.search);
 const username = params.get("username");
 
 if(username){
-  document.getElementById("username").innerText = username;
+document.getElementById("username").innerText = username;
 }
-/* INITIAL MAP */
 
-var map = L.map('map').setView([20.5937,78.9629],5);
+/* CREATE MAP */
 
-/* LIGHT MAP */
+var map = L.map('map', {
+zoomControl:false
+}).setView([20.5937,78.9629],5);
 
-var lightLayer = L.tileLayer(
+/* ADD ZOOM BUTTON TO RIGHT */
+
+L.control.zoom({
+position:'topright'
+}).addTo(map);
+
+/* MAP TILE */
+
+L.tileLayer(
 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-);
+).addTo(map);
 
-/* DARK MAP */
+/* SIDEBAR TOGGLE */
 
-var darkLayer = L.tileLayer(
-'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-);
-
-lightLayer.addTo(map);
-
-let darkMode = false;
-
-/* MAP MODE TOGGLE */
-
-function toggleMode(){
-
-if(darkMode){
-
-map.removeLayer(darkLayer);
-lightLayer.addTo(map);
-darkMode=false;
-
-}else{
-
-map.removeLayer(lightLayer);
-darkLayer.addTo(map);
-darkMode=true;
-
-}
-
+function toggleSidebar(){
+document.querySelector(".left").classList.toggle("active");
 }
 
 /* GET USER LOCATION */
 
 if(navigator.geolocation){
-
 navigator.geolocation.getCurrentPosition(showLocation, locationError);
-
-}else{
-
-alert("Geolocation not supported");
-
 }
-
 
 function showLocation(position){
 
 let lat = position.coords.latitude;
 let lng = position.coords.longitude;
 
-/* SHOW LOCATION TEXT */
-
 document.getElementById("locationInfo").innerHTML =
 "Latitude: " + lat + "<br>Longitude: " + lng;
 
-/* CENTER MAP */
-
-map.setView([lat,lng],13);
-
-/* ADD MARKER */
+map.setView([lat,lng],14);
 
 L.marker([lat,lng])
 .addTo(map)
 .bindPopup("You are here")
 .openPopup();
-
 }
-
 
 function locationError(){
-
 document.getElementById("locationInfo").innerText =
 "Location access denied.";
-
 }
-
 
 /* SOS BUTTON */
 
 document.querySelector(".sos").onclick=function(){
-
-if(navigator.geolocation){
 
 navigator.geolocation.getCurrentPosition(function(pos){
 
@@ -312,10 +295,7 @@ alert("Emergency location shared!");
 
 });
 
-}
-
 };
-
 
 /* FEEDBACK SYSTEM */
 
@@ -328,8 +308,6 @@ alert("Please write feedback");
 return;
 }
 
-/* SHOW IN FEEDBACK PANEL */
-
 let list = document.getElementById("feedbackList");
 
 let item = document.createElement("p");
@@ -337,11 +315,6 @@ let item = document.createElement("p");
 item.innerText = "• "+text;
 
 list.appendChild(item);
-
-
-/* ADD MAP MARKER */
-
-if(navigator.geolocation){
 
 navigator.geolocation.getCurrentPosition(function(pos){
 
@@ -354,8 +327,6 @@ L.marker([lat,lng])
 .openPopup();
 
 });
-
-}
 
 document.getElementById("feedbackText").value="";
 

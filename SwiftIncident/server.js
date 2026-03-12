@@ -2,24 +2,18 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-
 const app = express();
 const PORT = 3000;
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// serve static files
 app.use(express.static("public"));
 
 const USERS_FILE = path.join(__dirname, "users.json");
 
-// create file if it doesn't exist
 if (!fs.existsSync(USERS_FILE)) {
   fs.writeFileSync(USERS_FILE, JSON.stringify([]));
 }
 
-// read users
 function readUsers() {
   try {
     const data = fs.readFileSync(USERS_FILE, "utf8");
@@ -30,7 +24,7 @@ function readUsers() {
   }
 }
 
-// save users
+
 function saveUsers(users) {
   try {
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
@@ -40,13 +34,11 @@ function saveUsers(users) {
   }
 }
 
-// HOME ROUTE
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
 
-// REGISTER ENDPOINT
 app.post("/register", (req, res) => {
   try {
 
@@ -81,7 +73,6 @@ app.post("/register", (req, res) => {
 });
 
 
-// LOGIN ENDPOINT
 app.post("/login", (req, res) => {
 
   const { username, password } = req.body;
@@ -104,7 +95,6 @@ app.post("/login", (req, res) => {
 
 });
 
-// ROUTE PARAMETER EXAMPLE
 app.get("/users/:username", (req, res) => {
 
   try {
@@ -131,7 +121,6 @@ app.get("/users/:username", (req, res) => {
 });
 
 
-// MULTIPLE ROUTE PARAMETERS
 app.get("/users/:username/post/:id", (req, res) => {
 
   const { username, id } = req.params;
@@ -141,7 +130,6 @@ app.get("/users/:username/post/:id", (req, res) => {
 });
 
 
-// QUERY PARAMETER EXAMPLE
 app.get("/search", (req, res) => {
 
   try {
@@ -172,8 +160,6 @@ app.get("/search", (req, res) => {
 });
 
 
-// OPTIONAL ROUTE PARAMETER
-// PROFILE WITHOUT USERNAME
 app.get("/profile", (req, res) => {
   res.send("No username provided");
 });
